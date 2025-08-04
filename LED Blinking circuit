@@ -1,0 +1,70 @@
+const int redLedPin = 13;
+const int greenLedPin = 12;
+const int yellowLedPin = 11;
+const int buttonPin = 2;
+int buttonState = 0;
+int lastButtonState = LOW;
+unsigned long lastDebounceTime = 0;
+const long debounceDelay = 50;
+unsigned long lastBatteryCheck = 0;
+const long batteryCheckInterval = 10000;
+bool lowBattery = false;
+
+void setup() {
+  pinMode(redLedPin, OUTPUT);
+  pinMode(greenLedPin, OUTPUT);
+  pinMode(yellowLedPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
+  digitalWrite(greenLedPin, HIGH);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int reading = digitalRead(buttonPin);
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (reading != buttonState) {
+      buttonState = reading;
+      if (buttonState == HIGH) { 
+        ringDoorbell();
+      }
+    }
+  }
+  lastButtonState = reading;
+
+  if (millis() - lastBatteryCheck > batteryCheckInterval) {
+    lowBattery = !lowBattery;
+    lastBatteryCheck = millis();
+    if (lowBattery) {
+      indicateLowBattery();
+    } else {
+      digitalWrite(yellowLedPin, LOW);
+      digitalWrite(greenLedPin, HIGH);
+    }
+  }
+}
+
+void ringDoorbell() {
+  digitalWrite(greenLedPin, LOW);
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(redLedPin, HIGH);
+    delay(200);
+    digitalWrite(redLedPin, LOW);
+    delay(200);
+  }
+  if (!lowBattery) {
+    digitalWrite(greenLedPin, HIGH);
+  }
+}
+
+void indicateLowBattery() {
+  digitalWrite(greenLedPin, LOW);
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(yellowLedPin, HIGH);
+    delay(500);
+    digitalWrite(yellowLedPin, LOW);
+    delay(500);
+  }
+}
